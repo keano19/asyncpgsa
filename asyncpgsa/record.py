@@ -7,23 +7,35 @@ class Record:
         self.row = row
 
     def __getattr__(self, item):
-        try:
-            return self.row[item]
-        except KeyError:
+        if item and self.row:
+            item = str(item)
             try:
-                return getattr(self.row, item)
-            except AttributeError:
-                raise AttributeError("'Row' object has no attribute '{}'"
-                                     .format(item))
+                return self.row[item]
+            except KeyError:
+                try:
+                    return getattr(self.row, item)
+                except AttributeError:
+                    return None
+        return None
 
     def __getitem__(self, key):
         if isinstance(key, Column):
             key = key.name
 
-        return self.row[key]
+        try:
+            return self.__getattr__(key)
+        except KeyError:
+            return None
 
     def __bool__(self):
         return self.row is not None
+
+    def get(self, key: str, default_value=None):
+        attr = self.__getattr__(key)
+        if attr:
+            return attr
+        else:
+            return default_value
 
 
 class RecordGenerator:
